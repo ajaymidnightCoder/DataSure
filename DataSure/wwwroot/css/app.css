@@ -16,6 +16,11 @@ a, .btn-link {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
+.btn {
+    width:100px;
+    height:35px;
+}
+
 .content {
     padding-top: 1.1rem;
 }

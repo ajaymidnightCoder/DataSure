@@ -58,10 +58,43 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+        <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.1" />
+        <PackageReference Include="DocumentFormat.OpenXml.Framework" Version="3.1.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.10" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.10">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.92" />
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.92" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.92" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
+        <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+        <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DataSure.Contracts\DataSure.Contracts.csproj" />
+      <ProjectReference Include="..\DataSure.Service\DataSure.Service.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <MauiAsset Update="Resources\Raw\positionAddress.json">
+        <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+      </MauiAsset>
+      <MauiAsset Update="Resources\Raw\jobExperience.json">
+        <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+      </MauiAsset>
+      <MauiAsset Update="Resources\Raw\candidateDetails.json">
+        <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+      </MauiAsset>
+      <MauiAsset Update="Resources\Raw\candidateSubEntity.json">
+        <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </MauiAsset>
+      <MauiAsset Update="Resources\Raw\positionSubEntity.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </MauiAsset>
     </ItemGroup>
 
 </Project>

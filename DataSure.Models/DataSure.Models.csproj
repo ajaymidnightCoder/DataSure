@@ -6,12 +6,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\DataSure.Models\DataSure.Models.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="SQLiteService\" />
-  </ItemGroup>
-
 </Project>

@@ -1,0 +1,16 @@
+[
+  {
+    "EntityId": 1,
+    "Name": "Details",
+    "Code": "positiondetails",
+    "FileName": "positionDetails.json",
+    "ParentId": 1
+  },
+  {
+    "EntityId": 2,
+    "Name": "Address",
+    "Code": "address",
+    "FileName": "positionAddress.json",
+    "ParentId": 1
+  }
+]

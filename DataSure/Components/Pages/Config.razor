@@ -1,5 +1,85 @@
-﻿<h3>Config</h3>
+﻿@page "/adminconfig"
+@using DataSure.Components.Elements
+@using DataSure.Components.Elements.Config
+@using DataSure.Contracts.AdminService
+@using DataSure.Models.AdminModel
+
+@if (IsLoading)
+{
+    <p>Loading entities...</p>
+}
+else if (entities == null || entities.Count == 0)
+{
+    <p>No entities available.</p>
+}
+else
+{
+
+    <div class="mb-2" style="display:flex; flex-direction:row;">
+        <div class="flex1">
+
+            <select id="entitySelect" @onchange="OnEntitySelectionChanged" >
+                @foreach (var entity in entities)
+                {
+                    <option value="@entity.EntityId">@entity.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <SubEntityConfig ParentEntity="@selectedEntity"></SubEntityConfig>
+
+}
+
+<style>
+
+    .flex1 {
+        flex:1;
+    }
+   
+</style>
 
 @code {
+
+    private readonly string masterEntityFileName = "MasterEntity.json";
+
+    // Entity list for the dropdown
+    protected List<EntityConfigModel> entities { get; set; }
+
+    // Selected entity
+    protected EntityConfigModel selectedEntity { get; set; }
+
+    [Inject]
+    protected IEntitiyConfigService entityConfigService { get; set; }
+
+    protected bool IsLoading { get; set; } = true;  // Track loading state
+
+    // Method to get the entity list
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            entities = await entityConfigService.GetListByFileName<EntityConfigModel>(masterEntityFileName);
+            if (entities?.Count > 0)
+            {
+                selectedEntity = entities[0];
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching entity list: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false; // Data fetching completed
+        }
+    }
+
+    // This method will be invoked when the dropdown selection changes
+    protected async Task OnEntitySelectionChanged(ChangeEventArgs e)
+    {
+        int.TryParse(e.Value?.ToString(), out int selectedValue);
+        selectedEntity = entities.FirstOrDefault(x => x.EntityId == selectedValue);
+    }
 
 }

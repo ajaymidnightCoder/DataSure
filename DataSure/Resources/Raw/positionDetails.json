@@ -1,0 +1,30 @@
+[
+  {
+    "Name": "Position Name",
+    "Code": "pname",
+    "DataType": "String",
+    "IsRequired": true,
+    "LengthInChar": 255
+  },
+  {
+    "Name": "Position Id",
+    "Code": "pid",
+    "DataType": "String",
+    "IsRequired": true,
+    "LengthInChar": 50
+  },
+  {
+    "Name": "Location",
+    "Code": "location",
+    "DataType": "String",
+    "IsRequired": false,
+    "LengthInChar": 255
+  },
+  {
+    "Name": "Hiring Manager",
+    "Code": "hiring_manager",
+    "DataType": "String",
+    "IsRequired": true,
+    "LengthInChar": 255
+  }
+]

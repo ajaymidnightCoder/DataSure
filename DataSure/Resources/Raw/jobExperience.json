@@ -1,0 +1,34 @@
+[
+  {
+    "Name": "Name",
+    "Code": "name",
+    "Type": "String",
+    "IsRequired": true,
+    "LengthInChar": 255,
+    "DataType": "string"
+  },
+  {
+    "Name": "Code",
+    "Code": "code",
+    "Type": "String",
+    "IsRequired": true,
+    "LengthInChar": 50,
+    "DataType": "string"
+  },
+  {
+    "Name": "Location",
+    "Code": "location",
+    "Type": "String",
+    "IsRequired": true,
+    "LengthInChar": 255,
+    "DataType": "string"
+  },
+  {
+    "Name": "Hiring Manager",
+    "Code": "hiring_manager",
+    "Type": "String",
+    "IsRequired": true,
+    "LengthInChar": 255,
+    "DataType": "string"
+  }
+]

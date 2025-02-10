@@ -1,0 +1,199 @@
+﻿@using DataSure.Contracts.AdminService
+@using DataSure.Contracts.HelperServices
+@using DataSure.Models.AdminModel
+@using DocumentFormat.OpenXml.Packaging
+@using DocumentFormat.OpenXml.Spreadsheet
+@inject IEntitiyConfigService entityConfigService
+@inject IValidationService validationService
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <div class="scrollable-tabs-container">
+            <div class="scrollable-tabs">
+                @foreach (var entity in entities)
+                {
+                    <button class="btn btn-outline-secondary me-2 @(selectedEntity.FileName == entity.FileName ? "active-tab" : "")"
+                            @onclick="() => TabClicked(entity)">
+                        @entity.Name
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</nav>
+
+@if (!string.IsNullOrEmpty(selectedEntity?.FileName))
+{
+    <div>
+        <InputFile OnChange="HandleFileSelected" accept=".csv, .xlsx" />
+    </div>
+
+    <div>
+        @if (fileData != null && fileData.Any())
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        @foreach (var column in fileData[0].Keys)
+                        {
+                            <th>@column</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in fileData)
+                    {
+                        <tr>
+                            @foreach (var cell in row.Values)
+                            {
+                                <td>@cell</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+
+    private EntityConfigModel? selectedEntity;
+    private List<EntityConfigModel> entities = new();
+    private List<Dictionary<string, string>> fileData = new(); // Holds parsed file data for display
+
+    [Parameter]
+    public string FileName { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        entities = await entityConfigService.GetListByFileName<EntityConfigModel>(FileName);
+        selectedEntity = entities.FirstOrDefault();
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(selectedEntity?.FileName))
+        {
+            var properties = await entityConfigService.GetListByFileName<PropertyConfigModel>(selectedEntity?.FileName);
+
+            var file = e.File;
+            if (file != null)
+            {
+                var fileExtension = Path.GetExtension(file.Name);
+                using var stream = file.OpenReadStream();
+
+                var res = await validationService.VerifyImportFileColumnsAsync(stream, properties, file.Name);
+
+                if (fileExtension == ".csv")
+                {
+                    fileData = await ParseCsvFileAsync(stream);
+                }
+                else if (fileExtension == ".xlsx")
+                {
+                    fileData = await ParseExcelFileAsync(stream);
+                }
+            }
+        }
+    }
+
+    private void TabClicked(EntityConfigModel entityConfig)
+    {
+        selectedEntity = entityConfig;
+    }
+
+    private async Task<List<Dictionary<string, string>>> ParseCsvFileAsync(Stream stream)
+    {
+        var records = new List<Dictionary<string, string>>();
+        // using (var reader = new StreamReader(stream))
+        // using (var csv = new CsvHelper.CsvReader(reader, CultureInfo.InvariantCulture))
+        // {
+        //     await csv.ReadAsync();
+        //     csv.ReadHeader();
+        //     while (await csv.ReadAsync())
+        //     {
+        //         var row = csv.GetRecord<dynamic>();
+        //         var dict = ((IDictionary<string, object>)row)
+        //                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString());
+        //         records.Add(dict);
+        //     }
+        // }
+        return records;
+    }
+
+    private async Task<List<Dictionary<string, string>>> ParseExcelFileAsync(Stream stream)
+    {
+        var records = new List<Dictionary<string, string>>();
+        try
+        {
+
+
+            // Load stream data into a MemoryStream first
+            var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            memoryStream.Position = 0; // Reset position to the beginning
+
+            using (var spreadsheetDocument = SpreadsheetDocument.Open(memoryStream, false))
+            {
+                var workbookPart = spreadsheetDocument.WorkbookPart;
+                var sheet = workbookPart.Workbook.Sheets.GetFirstChild<Sheet>();
+                var worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
+
+                // Get column headers from the first row
+                var headers = new List<string>();
+                var rows = worksheetPart.Worksheet.Descendants<Row>().GetEnumerator();
+
+                if (rows.MoveNext())
+                {
+                    var headerRow = rows.Current;
+                    foreach (var cell in headerRow.Elements<Cell>())
+                    {
+                        headers.Add(GetCellValue(cell, workbookPart));
+                    }
+                }
+
+                // Reading data rows and mapping them to headers
+                while (rows.MoveNext())
+                {
+                    var rowData = new Dictionary<string, string>();
+                    var row = rows.Current;
+                    var cells = row.Elements<Cell>().ToList();
+
+                    for (int i = 0; i < headers.Count; i++)
+                    {
+                        var cell = cells.ElementAtOrDefault(i);
+                        var cellValue = cell != null ? GetCellValue(cell, workbookPart) : string.Empty;
+                        rowData[headers[i]] = cellValue;
+                    }
+
+                    records.Add(rowData);
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+        return records;
+    }
+
+    private string GetCellValue(Cell cell, WorkbookPart workbookPart)
+    {
+        if (cell == null || cell.CellValue == null)
+            return string.Empty;
+
+        var value = cell.CellValue.InnerText;
+
+        // Handle shared string table (for string values in Excel)
+        if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
+        {
+            var sharedStringTable = workbookPart.SharedStringTablePart.SharedStringTable;
+            return sharedStringTable.ChildElements[int.Parse(value)].InnerText;
+        }
+
+        return value;
+    }
+
+
+}

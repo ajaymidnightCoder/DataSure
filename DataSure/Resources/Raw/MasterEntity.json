@@ -1,0 +1,14 @@
+[
+  {
+    "EntityId": 1,
+    "Name": "Position",
+    "TableName": "position",
+    "FileName": "positionSubEntity.json"
+  },
+  {
+    "EntityId": 2,
+    "Name": "Candidate",
+    "TableName": "candidate",
+    "FileName": "candidateSubEntity.json"
+  }
+]

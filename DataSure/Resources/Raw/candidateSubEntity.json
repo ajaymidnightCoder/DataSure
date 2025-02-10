@@ -1,0 +1,14 @@
+[
+  {
+    "EntityId": 1,
+    "Name": "Details",
+    "Code": "candidatedetails",
+    "FileName": "candidateDetails.json"
+  },
+  {
+    "EntityId": 2,
+    "Name": "Job Experience",
+    "Code": "jobexperience",
+    "FileName": "jobExperience.json"
+  }
+]

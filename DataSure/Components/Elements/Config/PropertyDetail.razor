@@ -1,0 +1,72 @@
+﻿@using DataSure.Models.AdminModel
+@using DataSure.Models.Enum
+
+<div class="card mb-2">
+
+    <div class="card-body">
+
+        <div class="propDetailFlex">
+
+            <div class="titleInput">
+                <input class="prop" required type="text" placeholder="Name" @bind="@Property.Name" />
+            </div>
+
+            <div class="flex1">
+                <select class="custom-select" @bind="Property.DataType">
+                    <option value="">Select</option>
+                    @foreach (var dataType in Enum.GetValues(typeof(DataTypeEnum)))
+                    {
+                        <option value="@dataType">@dataType</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-check flex1">
+                <input class="form-check-input" type="checkbox" @bind="Property.IsRequired" id="isRequired">
+                <label class="form-check-label" for="isRequired">
+                    Is Required
+                </label>
+            </div>
+
+            <div class="flex1">
+                <button class="btn btn-danger" @onclick="() => Delete()">Delete</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    .propDetailFlex {
+        display: flex;
+        flex-direction: row;
+        /* justify-content: space-around; */
+    }
+
+    .titleInput {
+        flex: 2
+    }
+
+    .flex1 {
+        flex: 1
+    }
+
+</style>
+
+@code {
+
+    [Parameter]
+    public PropertyConfigModel Property { get; set; }
+
+    [Parameter]
+    public EventCallback<PropertyConfigModel> OnDeleteProperty { get; set; }
+
+    private void Delete()
+    {
+        OnDeleteProperty.InvokeAsync(Property);
+    }
+
+}

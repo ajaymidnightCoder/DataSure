@@ -5,9 +5,11 @@ VisualStudioVersion = 17.9.34902.65
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataSure", "DataSure\DataSure.csproj", "{AAB883A3-0973-4E6D-8726-7EBE4949EB5E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataSure.Contracts", "DataSure.Contracts\DataSure.Contracts.csproj", "{F9BECD3D-21AC-4368-AE54-F3CB3A37AC75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataSure.Contracts", "DataSure.Contracts\DataSure.Contracts.csproj", "{F9BECD3D-21AC-4368-AE54-F3CB3A37AC75}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataSure.Service", "DataSure.Service\DataSure.Service.csproj", "{404DDABC-2E81-418E-B643-380D7827CE94}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataSure.Service", "DataSure.Service\DataSure.Service.csproj", "{404DDABC-2E81-418E-B643-380D7827CE94}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataSure.Models", "DataSure.Models\DataSure.Models.csproj", "{103B8ADE-0B1E-4A27-9384-ECACA1F4B670}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +31,10 @@ Global
 		{404DDABC-2E81-418E-B643-380D7827CE94}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{404DDABC-2E81-418E-B643-380D7827CE94}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{404DDABC-2E81-418E-B643-380D7827CE94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{103B8ADE-0B1E-4A27-9384-ECACA1F4B670}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{103B8ADE-0B1E-4A27-9384-ECACA1F4B670}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{103B8ADE-0B1E-4A27-9384-ECACA1F4B670}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{103B8ADE-0B1E-4A27-9384-ECACA1F4B670}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,41 @@
+﻿
+/* Scrollable container for tabs */
+.scrollable-tabs-container {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+/* Scrollable tabs themselves */
+.scrollable-tabs {
+    display: inline-flex;
+    align-items: center;
+}
+
+    /* Button styles for the tabs */
+    .scrollable-tabs button {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+/* Highlight the active tab */
+.active-tab {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Hide scrollbars but still allow scrolling */
+.scrollable-tabs-container::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollable-tabs-container {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+
+/* Button styles for the tabs */
+.scrollable-tabs button {
+    padding: 0.5rem 1rem; /* Adjust padding as necessary */
+}

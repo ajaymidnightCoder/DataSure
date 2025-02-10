@@ -1,0 +1,47 @@
+﻿@page "/input"
+@using DataSure.Components.Elements.Input
+@using DataSure.Contracts.AdminService
+@using DataSure.Models.AdminModel
+
+<h3>Input</h3>
+
+<div>
+    <label for="entitySelect">Select Entity:</label>
+    <select id="entitySelect" @bind="selectedEntityFileName">
+        <option value="">Select</option>
+        @foreach (var entity in entities)
+        {
+            <option value="@entity.FileName">
+                @entity.Name
+            </option>
+        }
+    </select>
+</div>
+
+@if (!string.IsNullOrEmpty(selectedEntityFileName))
+{
+    <SubEntityInput FileName="@selectedEntityFileName"></SubEntityInput>
+}
+
+@code {
+
+    private string selectedEntityFileName { get; set; }
+
+    private readonly string masterEntityFileName = "MasterEntity.json";
+
+    protected List<EntityConfigModel> entities = new();
+
+    [Inject]
+    private IEntitiyConfigService entityConfigService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        entities = await entityConfigService.GetListByFileName<EntityConfigModel>(masterEntityFileName);
+        if (entities != null && entities.Count > 0)
+        {
+            // Set the default value to the first entity's FileName
+            selectedEntityFileName = entities.OrderBy(x => x.EntityId).FirstOrDefault()?.FileName;
+        }
+    }
+
+}
