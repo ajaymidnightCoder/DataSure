@@ -1,10 +1,21 @@
-﻿@using DataSure.Contracts.AdminService
+﻿@using CsvHelper
+@using CsvHelper.Configuration
+@using DataSure.Components.Elements.Notification
+@using DataSure.Contracts.AdminService
 @using DataSure.Contracts.HelperServices
+@using DataSure.Helper
 @using DataSure.Models.AdminModel
+@using DataSure.Service.HelperServices
 @using DocumentFormat.OpenXml.Packaging
 @using DocumentFormat.OpenXml.Spreadsheet
+@using System.Globalization
+@using System.Diagnostics
+@using System.Text
+@using System.Data
 @inject IEntitiyConfigService entityConfigService
 @inject IValidationService validationService
+@inject IFileOperationService fileOperationService
+@inject DataSure.Helper.NotificationService NotificationService
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
@@ -13,7 +24,7 @@
                 @foreach (var entity in entities)
                 {
                     <button class="btn btn-outline-secondary me-2 @(selectedEntity.FileName == entity.FileName ? "active-tab" : "")"
-                            @onclick="() => TabClicked(entity)">
+                    @onclick="() => TabClicked(entity)">
                         @entity.Name
                     </button>
                 }
@@ -28,32 +39,8 @@
         <InputFile OnChange="HandleFileSelected" accept=".csv, .xlsx" />
     </div>
 
-    <div>
-        @if (fileData != null && fileData.Any())
-        {
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        @foreach (var column in fileData[0].Keys)
-                        {
-                            <th>@column</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var row in fileData)
-                    {
-                        <tr>
-                            @foreach (var cell in row.Values)
-                            {
-                                <td>@cell</td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-    </div>
+    <ValidationMessages />
+
 }
 
 @code {
@@ -61,6 +48,7 @@
     private EntityConfigModel? selectedEntity;
     private List<EntityConfigModel> entities = new();
     private List<Dictionary<string, string>> fileData = new(); // Holds parsed file data for display
+    private DataTable importedDataTable { get; set; }
 
     [Parameter]
     public string FileName { get; set; }
@@ -73,6 +61,7 @@
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
+        string notificationMsg = string.Empty;
         if (!string.IsNullOrEmpty(selectedEntity?.FileName))
         {
             var properties = await entityConfigService.GetListByFileName<PropertyConfigModel>(selectedEntity?.FileName);
@@ -80,19 +69,32 @@
             var file = e.File;
             if (file != null)
             {
+                /*
+                * check the uploaded file is csv
+                * convert into datatable
+                * check if required columns are present
+                 */
+
                 var fileExtension = Path.GetExtension(file.Name);
-                using var stream = file.OpenReadStream();
 
-                var res = await validationService.VerifyImportFileColumnsAsync(stream, properties, file.Name);
+                if(fileExtension.ToLower() != ".csv")
+                {
+                    NotificationService.AddValidationMessage("Only csv is supported, aborting operation.");
+                }
 
-                if (fileExtension == ".csv")
+                importedDataTable = await fileOperationService.ConvertCsvToDataTableAsync(file);
+
+                var headerErrorList = await validationService.VerifyImportedHeadersAsync(importedDataTable, properties);
+
+                if (headerErrorList?.Count > 0)
                 {
-                    fileData = await ParseCsvFileAsync(stream);
+                    NotificationService.AddValidationMessage("Please resolve the errors and try again.");
+                    return;
                 }
-                else if (fileExtension == ".xlsx")
-                {
-                    fileData = await ParseExcelFileAsync(stream);
+                else{
+                    NotificationService.AddValidationMessage("CSV headers validated.");
                 }
+
             }
         }
     }
@@ -101,99 +103,5 @@
     {
         selectedEntity = entityConfig;
     }
-
-    private async Task<List<Dictionary<string, string>>> ParseCsvFileAsync(Stream stream)
-    {
-        var records = new List<Dictionary<string, string>>();
-        // using (var reader = new StreamReader(stream))
-        // using (var csv = new CsvHelper.CsvReader(reader, CultureInfo.InvariantCulture))
-        // {
-        //     await csv.ReadAsync();
-        //     csv.ReadHeader();
-        //     while (await csv.ReadAsync())
-        //     {
-        //         var row = csv.GetRecord<dynamic>();
-        //         var dict = ((IDictionary<string, object>)row)
-        //                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value?.ToString());
-        //         records.Add(dict);
-        //     }
-        // }
-        return records;
-    }
-
-    private async Task<List<Dictionary<string, string>>> ParseExcelFileAsync(Stream stream)
-    {
-        var records = new List<Dictionary<string, string>>();
-        try
-        {
-
-
-            // Load stream data into a MemoryStream first
-            var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0; // Reset position to the beginning
-
-            using (var spreadsheetDocument = SpreadsheetDocument.Open(memoryStream, false))
-            {
-                var workbookPart = spreadsheetDocument.WorkbookPart;
-                var sheet = workbookPart.Workbook.Sheets.GetFirstChild<Sheet>();
-                var worksheetPart = (WorksheetPart)workbookPart.GetPartById(sheet.Id);
-
-                // Get column headers from the first row
-                var headers = new List<string>();
-                var rows = worksheetPart.Worksheet.Descendants<Row>().GetEnumerator();
-
-                if (rows.MoveNext())
-                {
-                    var headerRow = rows.Current;
-                    foreach (var cell in headerRow.Elements<Cell>())
-                    {
-                        headers.Add(GetCellValue(cell, workbookPart));
-                    }
-                }
-
-                // Reading data rows and mapping them to headers
-                while (rows.MoveNext())
-                {
-                    var rowData = new Dictionary<string, string>();
-                    var row = rows.Current;
-                    var cells = row.Elements<Cell>().ToList();
-
-                    for (int i = 0; i < headers.Count; i++)
-                    {
-                        var cell = cells.ElementAtOrDefault(i);
-                        var cellValue = cell != null ? GetCellValue(cell, workbookPart) : string.Empty;
-                        rowData[headers[i]] = cellValue;
-                    }
-
-                    records.Add(rowData);
-                }
-            }
-
-        }
-        catch (Exception ex)
-        {
-
-        }
-        return records;
-    }
-
-    private string GetCellValue(Cell cell, WorkbookPart workbookPart)
-    {
-        if (cell == null || cell.CellValue == null)
-            return string.Empty;
-
-        var value = cell.CellValue.InnerText;
-
-        // Handle shared string table (for string values in Excel)
-        if (cell.DataType != null && cell.DataType.Value == CellValues.SharedString)
-        {
-            var sharedStringTable = workbookPart.SharedStringTablePart.SharedStringTable;
-            return sharedStringTable.ChildElements[int.Parse(value)].InnerText;
-        }
-
-        return value;
-    }
-
 
 }

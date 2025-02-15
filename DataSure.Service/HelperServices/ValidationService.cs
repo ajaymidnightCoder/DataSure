@@ -2,49 +2,57 @@
 using DataSure.Models.AdminModel;
 using DataSure.Models.Enum;
 using System.Data;
+using System.Diagnostics;
 
 namespace DataSure.Service.HelperServices
 {
-    public class ValidationService(IFileOperationService fileOperationService) : IValidationService
+    public class ValidationService(IFileOperationService fileOperationService, INotificationService notificationService) : IValidationService
     {
 
-        public async Task<List<string>?> VerifyImportFileColumnsAsync(Stream stream, List<PropertyConfigModel> propertyConfigs, string ingestedFileName)
+        public async Task<List<string>?> VerifyImportedHeadersAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
         {
-            var validationErrors = new List<string>();
-            List<string> fileHeaders;
+            string notificationMsg = string.Empty;
+            var validationErrorList = new List<string>();
 
-            var fileExtension = Path.GetExtension(ingestedFileName).ToLower();
-            fileHeaders = fileExtension switch
-            {
-                ".csv" => await fileOperationService.GetCsvHeadersAsync(stream),
-                ".xlsx" => await fileOperationService.GetExcelHeadersAsync(stream),
-                _ => validationErrors.Append($"{fileExtension} not supported!").ToList()
-            };
-
-            if (validationErrors.Any()) return validationErrors;
+            var csvHeaders = dataTable.Columns.Cast<DataColumn>().Select(c => c.ColumnName).ToList();
 
             var expectedColumns = propertyConfigs.Select(p => p.Code).ToList();
-            var mismatchedColumns = expectedColumns.Except(fileHeaders).ToList();
-            if (mismatchedColumns.Any())
+            var requiredColumns = propertyConfigs.Where(x => x.IsRequired).Select(p => p.Code).ToList();
+
+            // Check if all required columns are present in csvHeaders
+            var missingRequiredColumns = requiredColumns.Except(csvHeaders).ToList();
+            if (missingRequiredColumns.Count != 0)
             {
-                validationErrors.Add($"Columns {string.Join(", ", mismatchedColumns)} not selected for Entity.");
+                notificationMsg = $"Missing required columns: {string.Join(",", missingRequiredColumns)}";
+                validationErrorList.Add(notificationMsg);
+                notificationService.AddValidationMessage(notificationMsg);
             }
-            else if (fileHeaders.Count != expectedColumns.Count)
+            else
             {
-                validationErrors.Add("The columns in the file do not match the configured columns for the selected entity.");
+                notificationMsg = "All required columns are present.";
             }
 
-            return validationErrors.Any() ? validationErrors : null;
+            // Check if there are any extra columns in csvHeaders that are not in expectedColumns
+            var extraColumns = csvHeaders.Except(expectedColumns).ToList();
+            if (extraColumns.Count != 0)
+            {
+                notificationMsg = "Extra columns present: " + string.Join(", ", extraColumns);
+                validationErrorList.Add(notificationMsg);
+                notificationService.AddValidationMessage(notificationMsg);
+            }
+
+            return validationErrorList.Count > 0 ? validationErrorList : [];
         }
-        
+
         public async Task ValidateImportedProperties(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
         {
-            // Add error-related columns to the DataTable if they don’t exist
-            if (!dataTable.Columns.Contains("HasError"))
-                dataTable.Columns.Add("HasError", typeof(bool));
 
-            if (!dataTable.Columns.Contains("Error"))
-                dataTable.Columns.Add("Error", typeof(string));
+            //// Add error-related columns to the DataTable if they don’t exist
+            //if (!dataTable.Columns.Contains("HasError"))
+            //    dataTable.Columns.Add("HasError", typeof(bool));
+
+            //if (!dataTable.Columns.Contains("Error"))
+            //    dataTable.Columns.Add("Error", typeof(string));
 
             // Parallel processing for rows
             Parallel.ForEach(dataTable.Rows.Cast<DataRow>(), row =>
@@ -121,7 +129,6 @@ namespace DataSure.Service.HelperServices
                 _ => true
             };
         }
-
 
     }
 }

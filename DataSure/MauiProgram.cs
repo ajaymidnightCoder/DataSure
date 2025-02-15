@@ -1,9 +1,12 @@
 ﻿using DataSure.Contracts.AdminService;
 using DataSure.Contracts.HelperServices;
 using DataSure.Data;
+using DataSure.Helper;
 using DataSure.Service.AdminService;
 using DataSure.Service.HelperServices;
+//using DataSure.WinUI;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace DataSure
@@ -21,6 +24,13 @@ namespace DataSure
                 });
 
             builder.Services.AddMauiBlazorWebView();
+
+
+            builder.Services.AddSingleton<NotificationService>();
+            builder.Services.AddSingleton<NotificationService>();
+            builder.Services.AddSingleton<IDispatcher>(sp => Application.Current?.Dispatcher ?? throw new InvalidOperationException("Dispatcher not available"));
+
+
 
             // Configure SQLite with EF
             builder.Services.AddScoped<IEntitiyConfigService, EntitiyConfigService>();
