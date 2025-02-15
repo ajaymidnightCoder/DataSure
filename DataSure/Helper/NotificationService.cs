@@ -7,26 +7,27 @@ namespace DataSure.Helper
 {
     public partial class NotificationService : ObservableObject, INotificationService
     {
-        [ObservableProperty]
-        private ObservableCollection<string> validationMessages;
+        private readonly ObservableCollection<string> _validationMessages;
+        public ReadOnlyObservableCollection<string> ValidationMessages { get; }
 
         public NotificationService()
         {
-            validationMessages = new ObservableCollection<string>();
+            _validationMessages = new ObservableCollection<string>();
+            ValidationMessages = new ReadOnlyObservableCollection<string>(_validationMessages);
         }
 
         public void AddValidationMessage(string message)
         {
             if (MainThread.IsMainThread)
             {
-                ValidationMessages.Add(message);
-                OnPropertyChanged(nameof(ValidationMessages)); // Notify UI
+                _validationMessages.Add(message);
+                OnPropertyChanged(nameof(ValidationMessages));
             }
             else
             {
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    ValidationMessages.Add(message);
+                    _validationMessages.Add(message);
                     OnPropertyChanged(nameof(ValidationMessages));
                 });
             }
@@ -36,7 +37,7 @@ namespace DataSure.Helper
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                ValidationMessages.Clear();
+                _validationMessages.Clear();
                 OnPropertyChanged(nameof(ValidationMessages));
             });
         }

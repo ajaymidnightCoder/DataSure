@@ -1,10 +1,10 @@
-﻿@using DataSure.Helper
-@inject NotificationService notificationService
+﻿@using DataSure.Contracts.HelperServices
+@inject INotificationService NotificationService
 
 <div>
     <h3>Validation Messages</h3>
     <ul>
-        @foreach (var message in notificationService.ValidationMessages)
+        @foreach (var message in NotificationService.ValidationMessages)
         {
             <li>@message</li>
         }
@@ -14,9 +14,9 @@
 @code {
     protected override void OnInitialized()
     {
-        notificationService.PropertyChanged += (sender, args) =>
+        NotificationService.PropertyChanged += (sender, args) =>
         {
-            if (args.PropertyName == nameof(notificationService.ValidationMessages))
+            if (args.PropertyName == nameof(NotificationService.ValidationMessages))
             {
                 InvokeAsync(StateHasChanged); // Ensure UI updates
             }

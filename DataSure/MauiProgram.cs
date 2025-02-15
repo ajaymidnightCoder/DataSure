@@ -26,16 +26,15 @@ namespace DataSure
             builder.Services.AddMauiBlazorWebView();
 
 
-            builder.Services.AddSingleton<NotificationService>();
-            builder.Services.AddSingleton<NotificationService>();
-            builder.Services.AddSingleton<IDispatcher>(sp => Application.Current?.Dispatcher ?? throw new InvalidOperationException("Dispatcher not available"));
+            builder.Services.AddSingleton<INotificationService, NotificationService>();
 
-
+            builder.Services.AddSingleton<IDispatcher>(sp =>
+                Application.Current?.Dispatcher ?? throw new InvalidOperationException("Dispatcher not available"));
 
             // Configure SQLite with EF
             builder.Services.AddScoped<IEntitiyConfigService, EntitiyConfigService>();
             builder.Services.AddScoped<IValidationService, ValidationService>();
-            builder.Services.AddScoped<IFileOperationService, FileOperationService>();
+            builder.Services.AddScoped<IFileOperationService, FileOperationService>(); 
 
 
             string dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
