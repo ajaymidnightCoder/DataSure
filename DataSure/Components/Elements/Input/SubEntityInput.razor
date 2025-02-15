@@ -15,7 +15,7 @@
 @inject IEntitiyConfigService entityConfigService
 @inject IValidationService validationService
 @inject IFileOperationService fileOperationService
-@inject DataSure.Helper.NotificationService NotificationService
+@inject INotificationService NotificationService
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
@@ -69,6 +69,7 @@
             var file = e.File;
             if (file != null)
             {
+                NotificationService.ClearMessages();
                 /*
                 * check the uploaded file is csv
                 * convert into datatable
@@ -84,12 +85,16 @@
 
                 importedDataTable = await fileOperationService.ConvertCsvToDataTableAsync(file);
 
+                if (importedDataTable?.Rows?.Count == 0)
+                {
+                    
+                }
+
                 var headerErrorList = await validationService.VerifyImportedHeadersAsync(importedDataTable, properties);
 
                 if (headerErrorList?.Count > 0)
                 {
                     NotificationService.AddValidationMessage("Please resolve the errors and try again.");
-                    return;
                 }
                 else{
                     NotificationService.AddValidationMessage("CSV headers validated.");
