@@ -1,15 +1,16 @@
 ﻿using DataSure.Contracts.HelperServices;
 using DataSure.Models.AdminModel;
 using DataSure.Models.Enum;
+using DataSure.Models.NotificationModel;
+using System.Collections.Concurrent;
 using System.Data;
-using System.Diagnostics;
 
 namespace DataSure.Service.HelperServices
 {
     public class ValidationService(IFileOperationService fileOperationService, INotificationService notificationService) : IValidationService
     {
 
-        public async Task<List<string>?> VerifyImportedHeadersAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
+        public async Task<List<string>?> ValidateImportedHeadersAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
         {
             string notificationMsg = string.Empty;
             var validationErrorList = new List<string>();
@@ -25,7 +26,8 @@ namespace DataSure.Service.HelperServices
             {
                 notificationMsg = $"Missing required columns: {string.Join(",", missingRequiredColumns)}";
                 validationErrorList.Add(notificationMsg);
-                notificationService.AddValidationMessage(notificationMsg);
+                //notificationService.AddValidationMessage(notificationMsg);
+                notificationService.NotifyUser(message: notificationMsg, MessageType.Error, 50);
             }
             else
             {
@@ -38,84 +40,82 @@ namespace DataSure.Service.HelperServices
             {
                 notificationMsg = "Extra columns present: " + string.Join(", ", extraColumns);
                 validationErrorList.Add(notificationMsg);
-                notificationService.AddValidationMessage(notificationMsg);
+                //notificationService.AddValidationMessage(notificationMsg);
+                notificationService.NotifyUser(message: notificationMsg, MessageType.Error, 50);
             }
 
             return validationErrorList.Count > 0 ? validationErrorList : [];
         }
 
-        public async Task ValidateImportedProperties(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
+        public async Task ValidateDataTableAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
         {
+            string notificationMsg = string.Empty;
+            int totalOperations = propertyConfigs.Count * dataTable.Rows.Count; // Total validations
+            int completedOperations = 0; // Track progress
+            const int minProgress = 10; // Start progress at 10%
+            const int maxProgress = 90; // Cap progress at 90%
+            int currentProgress = minProgress;
 
-            //// Add error-related columns to the DataTable if they don’t exist
-            //if (!dataTable.Columns.Contains("HasError"))
-            //    dataTable.Columns.Add("HasError", typeof(bool));
+            var errorRows = new ConcurrentBag<DataRow>(); // Thread-safe collection
 
-            //if (!dataTable.Columns.Contains("Error"))
-            //    dataTable.Columns.Add("Error", typeof(string));
+            // Notify UI that validation is starting
+            notificationService.NotifyUser("Validation Started...", MessageType.Neutral, minProgress);
 
-            // Parallel processing for rows
-            Parallel.ForEach(dataTable.Rows.Cast<DataRow>(), row =>
+            Parallel.ForEach(propertyConfigs, propertyConfig =>
             {
-                bool hasError = false;
-                var errorMessages = new List<string>();
-
-                foreach (var propertyConfig in propertyConfigs)
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    // Check if the column is missing
-                    if (!dataTable.Columns.Contains(propertyConfig.Code))
-                    {
-                        hasError = true;
-                        errorMessages.Add($"Column '{propertyConfig.Code}' is missing in the imported data.");
-                        break; // Stop further checks for this row if critical column is missing
-                    }
-
+                    bool hasError = false;
                     var cellValue = row[propertyConfig.Code]?.ToString();
+                    var errorMessages = new List<string>();
 
-                    // Check if required field is missing
+                    // Validate required fields
                     if (propertyConfig.IsRequired && string.IsNullOrWhiteSpace(cellValue))
                     {
                         hasError = true;
-                        errorMessages.Add($"Column '{propertyConfig.Code}' is required but missing in some rows.");
-                        continue; // Move to next property check for this row
+                        errorMessages.Add($"Column '{propertyConfig.Code}' is required.");
                     }
 
                     // Validate data type
                     if (!string.IsNullOrWhiteSpace(cellValue) && !IsValidDataType(cellValue, propertyConfig.DataType))
                     {
                         hasError = true;
-                        errorMessages.Add($"Column '{propertyConfig.Code}' contains an invalid data type in some rows.");
-                        continue;
+                        errorMessages.Add($"Column '{propertyConfig.Code}' has an invalid data type.");
                     }
 
                     // Validate length
                     if (propertyConfig.LengthInChar.HasValue && cellValue?.Length > propertyConfig.LengthInChar.Value)
                     {
                         hasError = true;
-                        errorMessages.Add($"Column '{propertyConfig.Code}' exceeds the maximum length of {propertyConfig.LengthInChar.Value} characters.");
+                        errorMessages.Add($"Column '{propertyConfig.Code}' exceeds {propertyConfig.LengthInChar.Value} characters.");
                     }
-                }
 
-                // Update row with error information if any errors were found
-                if (hasError)
-                {
-                    row["HasError"] = true;
-                    row["Error"] = string.Join("; ", errorMessages);
-                }
-                else
-                {
-                    row["HasError"] = false;
-                    row["Error"] = string.Empty; // Clear error message if no errors are found
+                    // Mark row as having errors
+                    if (hasError)
+                    {
+                        lock (row) // Ensure thread safety
+                        {
+                            row["HasError"] = true;
+                            row["Error"] = string.Join("; ", errorMessages);
+                        }
+                        errorRows.Add(row);
+                    }
+
+                    // **Update progress safely using Interlocked**
+                    int currentProgress = Interlocked.Increment(ref completedOperations) * (maxProgress - minProgress) / totalOperations + minProgress;
+                    if (currentProgress <= maxProgress)
+                    {
+                        //notificationService.UpdateProgress(currentProgress);
+                        notificationService.NotifyUser("Validation Completed!", MessageType.Success, maxProgress);
+                    }
                 }
             });
 
-            // Optional: Output or log errors for inspection
-            var errorRows = dataTable.AsEnumerable().Where(r => r.Field<bool>("HasError"));
-            foreach (var errorRow in errorRows)
-            {
-                Console.WriteLine($"Row error: {errorRow["Error"]}"); // Replace with actual logging
-            }
+            // Notify UI that validation is done (progress stays at 90%)
+            notificationService.UpdateProgress(maxProgress);
+            notificationService.NotifyUser("Validation Completed!", MessageType.Success, maxProgress);
         }
+
 
         private bool IsValidDataType(string value, DataTypeEnum dataType)
         {

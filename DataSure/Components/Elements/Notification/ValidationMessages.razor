@@ -1,25 +1,70 @@
 ﻿@using DataSure.Contracts.HelperServices
+@using DataSure.Helper
+@using DataSure.Models.NotificationModel
 @inject INotificationService NotificationService
 
+
 <div>
-    <h3>Validation Messages</h3>
-    <ul>
-        @foreach (var message in NotificationService.ValidationMessages)
-        {
-            <li>@message</li>
-        }
-    </ul>
+    <h3>Validation Progress</h3>
+    <div class="progress" style="height: 25px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+             role="progressbar"
+             aria-valuenow="@NotificationService.ProgressPercentage"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             style="width: @NotificationService.ProgressPercentage%;">
+            @NotificationService.ProgressPercentage%
+        </div>
+    </div>
 </div>
 
+<h3>Notifications</h3>
+<ul>
+    @foreach (var notification in NotificationService.NotificationList)
+    {
+        <li class="@GetMessageClass(notification.MsgType)">
+            <span>@notification.Message</span>
+        </li>
+    }
+</ul>
+
+
+<style>
+    .error-message {
+        color: red;
+        font-weight: bold;
+    }
+
+    .success-message {
+        color: green;
+        font-weight: bold;
+    }
+
+    .neutral-message {
+        color: gray;
+    }
+
+
+</style>
+
 @code {
+
     protected override void OnInitialized()
     {
         NotificationService.PropertyChanged += (sender, args) =>
         {
-            if (args.PropertyName == nameof(NotificationService.ValidationMessages))
+            if (args.PropertyName == nameof(NotificationService.NotificationList))
             {
                 InvokeAsync(StateHasChanged); // Ensure UI updates
             }
         };
     }
+
+    private string GetMessageClass(MessageType msgType) => msgType switch
+    {
+        MessageType.Error => "error-message",
+        MessageType.Success => "success-message",
+        _ => "neutral-message"
+    };
+
 }
