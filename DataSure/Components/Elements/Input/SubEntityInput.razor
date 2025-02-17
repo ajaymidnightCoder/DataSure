@@ -5,6 +5,7 @@
 @using DataSure.Contracts.HelperServices
 @using DataSure.Helper
 @using DataSure.Models.AdminModel
+@using DataSure.Models.NotificationModel
 @using DataSure.Service.HelperServices
 @using DocumentFormat.OpenXml.Packaging
 @using DocumentFormat.OpenXml.Spreadsheet
@@ -70,7 +71,8 @@
             if (file != null)
             {
                 NotificationService.ClearMessages();
-                /*
+
+                /* Done
                 * check the uploaded file is csv
                 * convert into datatable
                 * check if required columns are present
@@ -80,25 +82,46 @@
 
                 if(fileExtension.ToLower() != ".csv")
                 {
-                    NotificationService.AddValidationMessage("Only csv is supported, aborting operation.");
+                    NotificationService.NotifyUser("Only csv is supported, aborting operation.", MessageType.Error, 100);
                 }
 
                 importedDataTable = await fileOperationService.ConvertCsvToDataTableAsync(file);
 
                 if (importedDataTable?.Rows?.Count == 0)
                 {
-                    
+
                 }
 
-                var headerErrorList = await validationService.VerifyImportedHeadersAsync(importedDataTable, properties);
+                var headerErrorList = await validationService.ValidateImportedHeadersAsync(importedDataTable, properties);
 
                 if (headerErrorList?.Count > 0)
                 {
-                    NotificationService.AddValidationMessage("Please resolve the errors and try again.");
+                    NotificationService.NotifyUser("Please resolve the errors and try again.", MessageType.Error, 100);
                 }
                 else{
-                    NotificationService.AddValidationMessage("CSV headers validated.");
+                    NotificationService.NotifyUser("CSV headers validated.", MessageType.Success, 5);
                 }
+
+                // await Task.Delay(1000);
+                // NotificationService.NotifyUser("Testing 1 second wait.", MessageType.Success, 10);
+
+                // await Task.Delay(1000);
+                // NotificationService.NotifyUser("Testing 1 second wait.", MessageType.Success, 15);
+
+                // await Task.Delay(1000);
+                // NotificationService.NotifyUser("Testing 1 second wait.", MessageType.Success, 20);
+
+                // await Task.Delay(1000);
+                // NotificationService.NotifyUser("Testing 1 second wait.", MessageType.Success, 25);
+
+                await validationService.ValidateDataTableAsync(importedDataTable, properties);
+
+
+                /*
+                 * Validate DataTable agaisnt the PropertyConfig, add errors column and add error if present
+                 * If errors present, convert datatable to csv and download the file
+                 * If no error, insert into table in SQLLite
+                 */
 
             }
         }

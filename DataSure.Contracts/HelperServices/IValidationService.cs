@@ -5,6 +5,7 @@ namespace DataSure.Contracts.HelperServices
 {
     public interface IValidationService
     {
-        Task<List<string>?> VerifyImportedHeadersAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs);
+        Task<List<string>?> ValidateImportedHeadersAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs);
+        Task ValidateDataTableAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs);
     }
 }
