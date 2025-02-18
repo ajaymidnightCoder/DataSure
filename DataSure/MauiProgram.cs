@@ -1,12 +1,12 @@
-﻿using DataSure.Contracts.AdminService;
+﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Storage;
+using DataSure.Contracts.AdminService;
+using DataSure.Contracts.DatabaseServices;
 using DataSure.Contracts.HelperServices;
-using DataSure.Data;
 using DataSure.Helper;
 using DataSure.Service.AdminService;
+using DataSure.Service.DatabaseServices;
 using DataSure.Service.HelperServices;
-//using DataSure.WinUI;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace DataSure
@@ -18,6 +18,7 @@ namespace DataSure
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCommunityToolkit()
                 .ConfigureFonts(fonts =>
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -34,12 +35,16 @@ namespace DataSure
             // Configure SQLite with EF
             builder.Services.AddScoped<IEntitiyConfigService, EntitiyConfigService>();
             builder.Services.AddScoped<IValidationService, ValidationService>();
-            builder.Services.AddScoped<IFileOperationService, FileOperationService>(); 
+            builder.Services.AddScoped<IFileOperationService, Helper.FileOperationService>();
+
+            // Get SQLite database file path
+            string dbPath = Path.Combine(FileSystem.AppDataDirectory, "mydatabase.db");
+            // Register the service using the interface
+            builder.Services.AddSingleton<ISQLiteService>(sp => new SQLiteService(dbPath));
 
 
-            string dbPath = Path.Combine(FileSystem.AppDataDirectory, "app.db");
-            builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite($"Data Source={dbPath}"));
+            // Register FileSaver for dependency injection
+            builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

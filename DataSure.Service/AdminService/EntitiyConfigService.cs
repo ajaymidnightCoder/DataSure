@@ -1,6 +1,5 @@
 ﻿using DataSure.Contracts.AdminService;
 using DataSure.Models.AdminModel;
-using DataSure.Models.Enum;
 using System.Data;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -67,7 +66,7 @@ namespace DataSure.Service.AdminService
                 string columnType = property.DataType switch
                 {
                     DataTypeEnum.String => $"VARCHAR({property.LengthInChar ?? 255})",
-                    DataTypeEnum.Int => "INTEGER",
+                    DataTypeEnum.Integer => "INTEGER",
                     //DataTypeEnum. => "BOOLEAN",
                     // Add other data types as needed
                     _ => throw new NotImplementedException($"Data type {property.DataType} not supported.")
@@ -86,7 +85,7 @@ namespace DataSure.Service.AdminService
             return dataType switch
             {
                 DataTypeEnum.String => length.HasValue ? $"VARCHAR({length.Value})" : "TEXT",
-                DataTypeEnum.Int => "INTEGER",
+                DataTypeEnum.Integer => "INTEGER",
                 // Add other cases as needed
                 _ => "TEXT",
             };

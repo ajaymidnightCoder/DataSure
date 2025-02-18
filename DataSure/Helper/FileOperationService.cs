@@ -1,18 +1,37 @@
-﻿using DataSure.Contracts.HelperServices;
+﻿using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Storage;
+using DataSure.Contracts.HelperServices;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Data;
 using System.Text;
+using System.Threading;
 
-namespace DataSure.Service.HelperServices
+namespace DataSure.Helper
 {
-    public class FileOperationService 
-    {
 
-        public async Task<List<string>> GetCsvHeadersAsync(Stream stream)
+    public class FileOperationService : IFileOperationService
+    {
+        private readonly IFileSaver _fileSaver;
+
+        public FileOperationService(IFileSaver fileSaver)
         {
-            using var reader = new StreamReader(stream);
-            var headerLine = await reader.ReadLineAsync();
-            return headerLine?.Split(',').Select(h => h.Trim()).ToList() ?? new List<string>();
+            _fileSaver = fileSaver ?? throw new ArgumentNullException(nameof(fileSaver));
+        }
+
+        public async Task DownloadFileAsync(string fileName, MemoryStream stream)
+        {
+            await DownloadFileAsync(fileName, stream, null);
+        }
+
+        public async Task DownloadFileAsync(string fileName, MemoryStream stream, string? toastNotificationMessage = null)
+        {
+            var fileSaverResult = await _fileSaver.SaveAsync(fileName, stream, CancellationToken.None);
+            fileSaverResult.EnsureSuccess();
+            if (toastNotificationMessage != null)
+            {
+                await Toast.Make($"{toastNotificationMessage}").Show(CancellationToken.None);
+            }
+
         }
 
         public async Task<DataTable> ConvertCsvToDataTableAsync(IBrowserFile csvFile)
@@ -27,7 +46,7 @@ namespace DataSure.Service.HelperServices
 
                 var headers = headerLine?.Split(',').Select(h => h.Trim()).ToList() ?? [];
 
-                if (headers == null) 
+                if (headers == null)
                     throw new Exception("CSV file is empty or has invalid headers.");
 
                 headers.ForEach(header => dataTable.Columns.Add(header));
@@ -89,4 +108,5 @@ namespace DataSure.Service.HelperServices
         }
 
     }
+
 }

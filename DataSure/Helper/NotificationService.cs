@@ -40,10 +40,10 @@ namespace DataSure.Helper
             var notification = new NotificationMessage(message, msgType, isIndented, progress);
             MainThread.BeginInvokeOnMainThread(() =>
             {
+                UpdateProgress(progress);
                 _notificationList.Add(notification);
                 OnPropertyChanged(nameof(NotificationList));
 
-                UpdateProgress(progress);
             });
         }
 
