@@ -1,6 +1,4 @@
-﻿using DataSure.Models.Enum;
-
-namespace DataSure.Models.AdminModel
+﻿namespace DataSure.Models.AdminModel
 {
 
     public class PropertyConfigModel

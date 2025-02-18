@@ -1,8 +1,6 @@
 ﻿using DataSure.Contracts.HelperServices;
 using DataSure.Models.AdminModel;
-using DataSure.Models.Enum;
 using DataSure.Models.NotificationModel;
-using System.Collections.Concurrent;
 using System.Data;
 
 namespace DataSure.Service.HelperServices
@@ -47,19 +45,24 @@ namespace DataSure.Service.HelperServices
             return validationErrorList.Count > 0 ? validationErrorList : [];
         }
 
-        public async Task ValidateDataTableAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
+        public async Task<bool> ValidateDataTableAsync(DataTable dataTable, List<PropertyConfigModel> propertyConfigs)
         {
-            string notificationMsg = string.Empty;
-            int totalOperations = propertyConfigs.Count * dataTable.Rows.Count; // Total validations
-            int completedOperations = 0; // Track progress
-            const int minProgress = 10; // Start progress at 10%
-            const int maxProgress = 90; // Cap progress at 90%
-            int currentProgress = minProgress;
+            int totalOperations = propertyConfigs.Count * dataTable.Rows.Count;
+            int completedOperations = 0;
+            const int minProgress = 10;
+            const int maxProgress = 90;
+            int validatedPassed = 1; // 1 = true, 0 = false (using int for thread safety)
 
-            var errorRows = new ConcurrentBag<DataRow>(); // Thread-safe collection
+            // Add error tracking columns if they don't exist
+            if (!dataTable.Columns.Contains("HasError"))
+                dataTable.Columns.Add("HasError", typeof(bool));
+
+            if (!dataTable.Columns.Contains("Error"))
+                dataTable.Columns.Add("Error", typeof(string));
 
             // Notify UI that validation is starting
-            notificationService.NotifyUser("Validation Started...", MessageType.Neutral, minProgress);
+            notificationService.NotifyUser("Property validation Started...", MessageType.Neutral, minProgress);
+            notificationService.UpdateProgress(minProgress);
 
             Parallel.ForEach(propertyConfigs, propertyConfig =>
             {
@@ -90,39 +93,39 @@ namespace DataSure.Service.HelperServices
                         errorMessages.Add($"Column '{propertyConfig.Code}' exceeds {propertyConfig.LengthInChar.Value} characters.");
                     }
 
-                    // Mark row as having errors
+                    // Update row with errors
                     if (hasError)
                     {
+                        Interlocked.Exchange(ref validatedPassed, 0); // Set to 0 (false) in a thread-safe way
                         lock (row) // Ensure thread safety
                         {
                             row["HasError"] = true;
                             row["Error"] = string.Join("; ", errorMessages);
                         }
-                        errorRows.Add(row);
+
+                        // Notify UI about error
+                        //notificationService.NotifyUser("Error Found", MessageType.Error, completedOperations);
                     }
 
                     // **Update progress safely using Interlocked**
                     int currentProgress = Interlocked.Increment(ref completedOperations) * (maxProgress - minProgress) / totalOperations + minProgress;
                     if (currentProgress <= maxProgress)
                     {
-                        //notificationService.UpdateProgress(currentProgress);
-                        notificationService.NotifyUser("Validation Completed!", MessageType.Success, maxProgress);
+                        notificationService.UpdateProgress(currentProgress);
                     }
                 }
             });
 
-            // Notify UI that validation is done (progress stays at 90%)
-            notificationService.UpdateProgress(maxProgress);
-            notificationService.NotifyUser("Validation Completed!", MessageType.Success, maxProgress);
+            return validatedPassed == 1;
+            
         }
-
 
         private bool IsValidDataType(string value, DataTypeEnum dataType)
         {
             return dataType switch
             {
                 DataTypeEnum.String => true,  // Any value is valid for strings
-                DataTypeEnum.Int => int.TryParse(value, out _),
+                DataTypeEnum.Integer => int.TryParse(value, out _),
                 DataTypeEnum.DateTime => DateTime.TryParse(value, out _),
                 //DataTypeEnum.Decimal => decimal.TryParse(value, out _),
                 //DataTypeEnum => bool.TryParse(value, out _),

@@ -1,9 +1,4 @@
-﻿@using DataSure.Contracts.AdminService
-@using DataSure.Models.AdminModel
-@using System.Text.Json
-@using System.Text.Json.Serialization
-
-@if (IsLoading)
+﻿@if (IsLoading)
 {
     <p>Loading Properties...</p>
 }
@@ -22,66 +17,4 @@ else
     }
     <button class="btn btn-primary" @onclick="() => AddRow()">Add</button>
     <button class="btn btn-success" type="submit" @onclick="() => Save()">Save</button>
-}
-
-@code {
-
-    protected bool IsLoading { get; set; } = true;  // Track loading state
-
-    [Parameter]
-
-    public EntityConfigModel entityConfig { get; set; }
-
-    [Inject]
-    protected IEntitiyConfigService entityConfigService { get; set; }
-
-    private List<PropertyConfigModel> propertyList { get; set; }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        try
-        {
-            propertyList = await entityConfigService.GetListByFileName<PropertyConfigModel>(entityConfig.FileName);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.ToString());
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    protected void AddRow()
-    {
-        PropertyConfigModel propertyConfigModel = new()
-            {
-                Name = string.Empty,
-                Code = string.Empty,
-                IsRequired = false
-            };
-        propertyList.Add(propertyConfigModel);
-        StateHasChanged();  // Trigger re-render of the component
-    }
-
-    protected async Task Save()
-    {
-
-        JsonSerializerOptions options = new()
-            {
-                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-            };
-        var content = JsonSerializer.Serialize<List<PropertyConfigModel>>(propertyList, options);
-        await entityConfigService.SaveRawFile(entityConfig.FileName, content);
-        Console.Write("Save clicked");
-
-    }
-
-    protected void Delete(PropertyConfigModel propertyConfigModel)
-    {
-        propertyList.Remove(propertyConfigModel);
-        StateHasChanged();  // Trigger re-render of the component
-    }
-
 }
