@@ -26,6 +26,13 @@
                     Is Required
                 </label>
             </div>
+            
+            <div class="form-check flex1">
+                <input class="form-check-input" type="checkbox" @bind="Property.IsPrimaryKey" disabled id="isPrimaryKey">
+                <label class="form-check-label" for="isPrimaryKey">
+                    Is Primary Key
+                </label>
+            </div>
 
             <div class="flex1">
                 <button class="btn btn-danger" @onclick="() => Delete()">Delete</button>

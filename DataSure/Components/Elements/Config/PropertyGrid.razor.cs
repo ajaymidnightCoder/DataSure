@@ -42,11 +42,13 @@ namespace DataSure.Components.Elements.Config
 
         protected void AddRow()
         {
+            bool isPrimary = propertyList?.Count() == 0;
             PropertyConfigModel propertyConfigModel = new()
             {
                 Name = string.Empty,
                 Code = string.Empty,
-                IsRequired = false
+                IsRequired = false,
+                IsPrimaryKey = isPrimary
             };
             propertyList.Add(propertyConfigModel);
             StateHasChanged();  // Trigger re-render of the component
@@ -63,7 +65,7 @@ namespace DataSure.Components.Elements.Config
             await entityConfigService.SaveRawFile(entityConfig.FileName, content);
             Console.Write("Save clicked");
 
-            await sqLiteService.CreateDynamicTableAsync(entityConfig.FileName, propertyList);
+            await sqLiteService.CreateDynamicTableAsync(entityConfig.TableName, propertyList);
 
             var res = await sqLiteService.GetTableNamesAsync();
         }
