@@ -4,6 +4,8 @@
     "Name": "Details",
     "Code": "positiondetails",
     "FileName": "positionDetails.json",
+    "TableName": "positionDetails",
+    "IsPrimaryDetails": true,
     "ParentId": 1
   },
   {
@@ -11,6 +13,8 @@
     "Name": "Address",
     "Code": "address",
     "FileName": "positionAddress.json",
+    "TableName": "positionAddress",
+    "IsPrimaryDetails": false,
     "ParentId": 1
   }
 ]

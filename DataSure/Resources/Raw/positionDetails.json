@@ -1,17 +1,19 @@
 [
   {
+    "Name": "Position Id",
+    "Code": "pid",
+    "DataType": "String",
+    "IsRequired": true,
+    "LengthInChar": 50,
+    "IsPrimaryKey": true,
+    "IsUnique": true
+  },
+  {
     "Name": "Position Name",
     "Code": "pname",
     "DataType": "String",
     "IsRequired": true,
     "LengthInChar": 255
-  },
-  {
-    "Name": "Position Id",
-    "Code": "pid",
-    "DataType": "String",
-    "IsRequired": true,
-    "LengthInChar": 50
   },
   {
     "Name": "Location",

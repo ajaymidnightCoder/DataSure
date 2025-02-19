@@ -3,12 +3,14 @@
     "EntityId": 1,
     "Name": "Position",
     "TableName": "position",
-    "FileName": "positionSubEntity.json"
+    "FileName": "positionSubEntity.json",
+    "PrimaryKey": "pid"
   },
   {
     "EntityId": 2,
     "Name": "Candidate",
     "TableName": "candidate",
-    "FileName": "candidateSubEntity.json"
+    "FileName": "candidateSubEntity.json",
+    "PrimaryKey": "cid"
   }
 ]
