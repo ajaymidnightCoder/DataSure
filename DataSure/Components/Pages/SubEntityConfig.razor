@@ -1,0 +1,19 @@
+﻿@page "/subentityConfig/{EntityName}/{SubEntityFile}/{EntityPrimaryKey}"
+@using DataSure.Components.Elements.EntityConfig
+@using Microsoft.AspNetCore.Components;
+
+<h3>@EntityName</h3>
+
+<SubEntitySelection EntityFileName="@SubEntityFile"></SubEntitySelection>
+
+@code {
+    [Parameter] 
+    public string EntityName { get; set; }
+
+    [Parameter] 
+    public string SubEntityFile { get; set; }
+
+    [Parameter] 
+    public string EntityPrimaryKey { get; set; }
+}
+

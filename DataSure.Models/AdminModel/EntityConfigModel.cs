@@ -6,6 +6,6 @@
         public required string Name { get; set; }
         public required string FileName { get; set; }
         public string? TableName { get; set; }
-        public bool IsMain { get; set; }
+        public string? PrimaryKey { get; set; }
     }
 }
