@@ -28,10 +28,10 @@ namespace DataSure.Service.AdminService
 
         public async Task<List<T>> GetListByFileName<T>(string fileName)
         {
+            var list = new List<T>();
             string filePath = string.Format(RawFilePath, fileName);
             var content = await GetRawFile(filePath);
 
-            var list = new List<T>();
             if (!string.IsNullOrWhiteSpace(content))
             {
                 JsonSerializerOptions options = new()
@@ -40,6 +40,7 @@ namespace DataSure.Service.AdminService
                 };
                 list = JsonSerializer.Deserialize<List<T>>(content, options);
             }
+
             return list;
         }
 

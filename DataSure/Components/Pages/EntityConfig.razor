@@ -1,0 +1,60 @@
+﻿@page "/entityconfig"
+@using DataSure.Contracts.AdminService
+@using DataSure.Models.AdminModel
+
+<h3>EntityConfig</h3>
+
+<div class="row">
+    @if (IsLoading)
+    {
+        <p>Loading entities...</p>
+    }
+    else if (entities == null || entities.Count == 0)
+    {
+        <p>No entities available.</p>
+    }
+    else
+    {
+        @foreach (var entity in entities)
+        {
+            <div class="col-md-12">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body">
+                        <h5 class="card-title">@entity.Name</h5>
+                        <a href="subentityConfig/@entity.Name/@entity.FileName/@entity.PrimaryKey" class="card-link">Configure properties</a>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+
+    private readonly string masterEntityFileName = "MasterEntity.json";
+
+    protected List<EntityConfigModel> entities { get; set; }
+
+    [Inject]
+    protected IEntitiyConfigService entityConfigService { get; set; }
+
+    protected bool IsLoading { get; set; } = true;  // Track loading state
+
+    // Method to get the entity list
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            entities = await entityConfigService.GetListByFileName<EntityConfigModel>(masterEntityFileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching entity list: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false; // Data fetching completed
+        }
+    }
+
+}
