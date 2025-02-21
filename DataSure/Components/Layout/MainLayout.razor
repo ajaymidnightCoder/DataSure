@@ -7,12 +7,52 @@
 
     <main>
 
-@* <div class="top-row px-4">
+        @* <div class="top-row px-4">
 <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
 </div> *@
 
-        <article class="content px-4" style="padding-right: 1.5rem !important; padding-left:1.5rem !important">
-            @Body
-        </article>
+
+        @if (IsModalVisible)
+        {
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    @if (!string.IsNullOrEmpty(ModalTitle))
+                    {
+                        <h3>@ModalTitle</h3>
+                    }
+                    <p>@ModalDescription</p>
+                    <button @onclick="CloseModal">@OkayButtonText</button>
+                </div>
+            </div>
+        }
+
+        <CascadingValue Value="this">
+            <article class="content px-4" style="padding-right: 1.5rem !important; padding-left:1.5rem !important">
+                @Body
+            </article>
+        </CascadingValue>
+
     </main>
 </div>
+
+@code {
+
+    private bool IsModalVisible;
+    private string ModalTitle;
+    private string ModalDescription;
+    private string OkayButtonText = "OK";
+
+    public void ShowModal(string title, string description, string buttonText = "OK")
+    {
+        ModalTitle = title;
+        ModalDescription = description;
+        OkayButtonText = buttonText;
+        IsModalVisible = true;
+        StateHasChanged(); // Ensure UI updates
+    }
+
+    private void CloseModal()
+    {
+        IsModalVisible = false;
+    }
+}
