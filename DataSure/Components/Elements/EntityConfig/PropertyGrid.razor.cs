@@ -1,12 +1,12 @@
-﻿using DataSure.Contracts.AdminService;
+﻿using DataSure.Components.Layout;
+using DataSure.Contracts.AdminService;
 using DataSure.Contracts.DatabaseServices;
 using DataSure.Models.AdminModel;
-using DataSure.Service.DatabaseServices;
 using Microsoft.AspNetCore.Components;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DataSure.Components.Elements.Config
+namespace DataSure.Components.Elements.EntityConfig
 {
     public partial class PropertyGrid
     {
@@ -20,7 +20,9 @@ namespace DataSure.Components.Elements.Config
         protected IEntitiyConfigService entityConfigService { get; set; }
 
         [Inject]
-        protected ISQLiteService sqLiteService { get; set; } 
+        protected ISQLiteService sqLiteService { get; set; }
+
+        [CascadingParameter] MainLayout Layout { get; set; }
 
         private List<PropertyConfigModel> propertyList { get; set; }
 
@@ -48,7 +50,7 @@ namespace DataSure.Components.Elements.Config
                 Name = string.Empty,
                 Code = string.Empty,
                 IsRequired = false,
-                IsPrimaryKey = isPrimary
+                //IsPrimaryKey = isPrimary
             };
             propertyList.Add(propertyConfigModel);
             StateHasChanged();  // Trigger re-render of the component
@@ -61,6 +63,14 @@ namespace DataSure.Components.Elements.Config
             {
                 Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
             };
+
+    //        propertyList.GroupBy(p => new { p.Name })
+    //.Where(g => g.Count() > 1)
+    //.Select(g => g.Key)
+    //.ToList();
+    //        if (propertyList.)
+
+            Layout.ShowModal("Hello", "This is a global modal!", "Got It");
             var content = JsonSerializer.Serialize<List<PropertyConfigModel>>(propertyList, options);
             await entityConfigService.SaveRawFile(entityConfig.FileName, content);
             Console.Write("Save clicked");

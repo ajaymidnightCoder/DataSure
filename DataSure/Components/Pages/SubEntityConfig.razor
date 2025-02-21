@@ -1,19 +1,177 @@
 ﻿@page "/subentityConfig/{EntityName}/{SubEntityFile}/{EntityPrimaryKey}"
 @using DataSure.Components.Elements.EntityConfig
+@using DataSure.Components.Layout
+@using DataSure.Contracts.AdminService
+@using DataSure.Models.AdminModel
 @using Microsoft.AspNetCore.Components;
+@using System.Diagnostics
+@using System.Text.Json
 
 <h3>@EntityName</h3>
 
-<SubEntitySelection EntityFileName="@SubEntityFile"></SubEntitySelection>
+@if (IsLoading)
+{
+    <p>Loading entities...</p>
+}
+else if (childEntities == null || childEntities.Count == 0)
+{
+    <p>No entities available.</p>
+}
+else
+{
+    <div>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-2">
+            @foreach (var child in childEntities)
+            {
+                <button class="me-2 btn btn-sm btn-outline-secondary @(selectedFileName == child.FileName ? "selected" : "")"
+                        @onclick="() => LinkClicked(child)"
+                        type="button">
+                    @child.Name
+                </button>
+            }
 
-@code {
-    [Parameter] 
-    public string EntityName { get; set; }
+            <button class="me-2 btn btn-outline-secondary" @onclick="() => { AddSubEntityClicked = true; }" type="button">
+                @if (AddSubEntityClicked)
+                {
+                    <input placeholder="Name" @bind="SubEntityName"
+                           type="text" @onkeyup="HandleKeyUp"
+                           @onblur="() => { AddSubEntityClicked = false; SubEntityName = string.Empty; }"
+                           @ref="subEntityInput" />
+                }
+                else
+                {
+                    <span>Add</span>
+                }
+            </button>
+        </nav>
 
-    [Parameter] 
-    public string SubEntityFile { get; set; }
+        <PropertyGrid entityConfig="@selectedEntity"></PropertyGrid>
 
-    [Parameter] 
-    public string EntityPrimaryKey { get; set; }
+    </div>
 }
 
+<style>
+    .selected {
+        background-color: #007bff;
+        color: white;
+    }
+</style>
+
+@code {
+
+    [Parameter]
+    public string EntityName { get; set; }
+
+    [Parameter]
+    public string SubEntityFile { get; set; }
+
+    [Parameter]
+    public string EntityPrimaryKey { get; set; }
+
+    [CascadingParameter] MainLayout Layout { get; set; }
+
+    private bool AddSubEntityClicked = false;
+    private string SubEntityName = string.Empty;
+
+    // Reference to the input element
+    private ElementReference subEntityInput;
+
+    private string selectedFileName;
+
+    protected bool IsLoading { get; set; } = true;  // Track loading state
+
+    private EntityConfigModel selectedEntity { get; set; }
+
+    protected List<EntityConfigModel> childEntities { get; set; }
+
+    [Inject]
+    protected IEntitiyConfigService entityConfigService { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            childEntities = await entityConfigService.GetListByFileName<EntityConfigModel>(SubEntityFile);
+            if (childEntities?.Count > 0)
+            {
+                selectedFileName = childEntities.FirstOrDefault().FileName;
+                selectedEntity = childEntities.FirstOrDefault();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void LinkClicked(EntityConfigModel subEntity)
+    {
+        selectedFileName = subEntity.FileName;
+        selectedEntity = subEntity;
+        Debug.WriteLine("Clicked");
+    }
+
+    private void HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            AddSubEntity();
+        }
+        else if (e.Key == "Escape")
+        {
+            AddSubEntityClicked = false;
+            SubEntityName = string.Empty;
+        }
+    }
+
+    private void AddSubEntity()
+    {
+        if (!string.IsNullOrEmpty(SubEntityName))
+        {
+            if (childEntities.Any(x => x.Name == SubEntityName))
+            {
+                Layout.ShowModal(string.Empty, $"{SubEntityName} already exists.!", "Got It");
+            }
+            else
+            {
+                int? newEntityId = childEntities.OrderByDescending(x => x.EntityId).FirstOrDefault()?.EntityId;
+
+                newEntityId = newEntityId > 0 ? Convert.ToInt32(newEntityId) + 1 : 1;
+
+                var cleanSubEntityName = SubEntityName.Replace(" ", "").ToLower();
+
+                EntityConfigModel entityConfigModel = new()
+                    {
+                        EntityId = Convert.ToInt32(newEntityId),
+                        Name = SubEntityName,
+                        FileName = $"{cleanSubEntityName}.json",
+                        TableName = cleanSubEntityName
+                    };
+                childEntities.Add(entityConfigModel);
+
+                string content = JsonSerializer.Serialize(childEntities);
+                entityConfigService.SaveRawFile(SubEntityFile, content);
+
+                entityConfigService.CreatRawFile(entityConfigModel.FileName);
+
+                SubEntityName = string.Empty;
+                AddSubEntityClicked = false;
+
+                StateHasChanged();
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (AddSubEntityClicked) // Check if AddSubEntityClicked is true
+        {
+            await subEntityInput.FocusAsync(); // Focus input whenever it becomes visible
+        }
+    }
+
+}
