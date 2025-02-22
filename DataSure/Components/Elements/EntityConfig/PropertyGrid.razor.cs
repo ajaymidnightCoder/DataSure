@@ -14,7 +14,7 @@ namespace DataSure.Components.Elements.EntityConfig
         protected bool IsLoading { get; set; } = true;  // Track loading state
 
         [Parameter]
-        public EntityConfigModel entityConfig { get; set; }
+        public SubEntityConfigModel entityConfig { get; set; }
 
         [Inject]
         protected IEntitiyConfigService entityConfigService { get; set; }
@@ -63,12 +63,6 @@ namespace DataSure.Components.Elements.EntityConfig
             {
                 Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
             };
-
-    //        propertyList.GroupBy(p => new { p.Name })
-    //.Where(g => g.Count() > 1)
-    //.Select(g => g.Key)
-    //.ToList();
-    //        if (propertyList.)
 
             Layout.ShowModal("Hello", "This is a global modal!", "Got It");
             var content = JsonSerializer.Serialize<List<PropertyConfigModel>>(propertyList, options);

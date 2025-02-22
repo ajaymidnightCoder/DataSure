@@ -1,8 +1,19 @@
 ﻿@page "/entityconfig"
+@using DataSure.Components.Layout
 @using DataSure.Contracts.AdminService
 @using DataSure.Models.AdminModel
+@using System.Diagnostics
+@using System.Text.Json
 
-<h3>EntityConfig</h3>
+
+<div class="row">
+    <div class="col-9">
+        <h3>EntityConfig</h3>
+    </div>
+    <div class="col-3">
+        <button class="btn btn-success" style="float:right" @onclick="AddEntity">Add</button>
+    </div>
+</div>
 
 <div class="row">
     @if (IsLoading)
@@ -15,10 +26,39 @@
     }
     else
     {
+        @if (isAddingNewEntity)
+        {
+            <div class="col-md-12 mb-1 mt-1">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">New Entity</h5>
+
+                        <EditForm Model="@newEntity" OnValidSubmit="SaveEntity">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-2">
+                                <label>Entity Name</label>
+                                <input type="text" class="form-control" @bind="newEntity.Name" />
+                                <ValidationMessage For="@(() => newEntity.Name)" />
+                            </div>
+
+                            <div class="mb-2">
+                                <label>Primary Key</label>
+                                <input type="text" class="form-control" @bind="newEntity.PrimaryKey" />
+                                <ValidationMessage For="@(() => newEntity.PrimaryKey)" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        }
+
         @foreach (var entity in entities)
         {
-            <div class="col-md-12">
-                <div class="card" style="width: 18rem;">
+            <div class="col-md-12 mb-1 mt-1">
+                <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">@entity.Name</h5>
                         <a href="subentityConfig/@entity.Name/@entity.FileName/@entity.PrimaryKey" class="card-link">Configure properties</a>
@@ -32,15 +72,17 @@
 @code {
 
     private readonly string masterEntityFileName = "MasterEntity.json";
+    private EntityConfigModel newEntity = null;
+    private bool isAddingNewEntity = false;
+    protected List<EntityConfigModel> entities { get; set; } = new();
+    protected bool IsLoading { get; set; } = true;
 
-    protected List<EntityConfigModel> entities { get; set; }
+    [CascadingParameter]
+    MainLayout Layout { get; set; }
 
     [Inject]
     protected IEntitiyConfigService entityConfigService { get; set; }
 
-    protected bool IsLoading { get; set; } = true;  // Track loading state
-
-    // Method to get the entity list
     protected override async Task OnInitializedAsync()
     {
         try
@@ -53,7 +95,39 @@
         }
         finally
         {
-            IsLoading = false; // Data fetching completed
+            IsLoading = false;
+        }
+    }
+
+    private void AddEntity()
+    {
+        isAddingNewEntity = true;
+        newEntity = new EntityConfigModel()
+            {
+                Name = string.Empty,
+                FileName = string.Empty,
+                EntityId = 1 + (entities.OrderByDescending(y => y.EntityId)?.FirstOrDefault()?.EntityId ?? 0)
+            };
+    }
+
+    private void SaveEntity()
+    {
+        if (entities.Any(x => x.Name.ToLower() == newEntity.Name.ToLower().Trim()))
+        {
+            Layout.ShowModal("Cannot add duplicates!", $"{newEntity.Name} already exists.", "Got It");
+        }
+        else
+        {
+            newEntity.FileName = newEntity.Name.ToLower().Replace(" ", "");
+            entities.Add(newEntity);
+            string content = JsonSerializer.Serialize(entities);
+            entityConfigService.SaveRawFile(masterEntityFileName, content);
+
+            entityConfigService.CreatRawFile(newEntity.FileName);
+
+            Debug.WriteLine("Save clicked");
+
+            isAddingNewEntity = false;
         }
     }
 

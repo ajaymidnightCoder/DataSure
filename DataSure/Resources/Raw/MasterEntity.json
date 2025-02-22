@@ -12,5 +12,26 @@
     "TableName": "candidate",
     "FileName": "candidateSubEntity.json",
     "PrimaryKey": "cid"
+  },
+  {
+    "EntityId": 3,
+    "Name": "Roles",
+    "TableName": "roles",
+    "FileName": "rolesSubEntity.json",
+    "PrimaryKey": "rid"
+  },
+  {
+    "EntityId": 4,
+    "Name": "Employee",
+    "TableName": "employee",
+    "FileName": "employeeSubEntity.json",
+    "PrimaryKey": "eid"
+  },
+  {
+    "EntityId": 4,
+    "Name": "User",
+    "TableName": "user",
+    "FileName": "userSubEntity.json",
+    "PrimaryKey": "userId"
   }
 ]

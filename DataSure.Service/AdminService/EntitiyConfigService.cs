@@ -92,18 +92,18 @@ namespace DataSure.Service.AdminService
             };
         }
 
-        public async Task SaveSubEntityProperties(List<PropertyConfigModel> propertyList, EntityConfigModel entityConfigModel)
-        {
-            JsonSerializerOptions options = new()
-            {
-                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-            };
-            var content = JsonSerializer.Serialize<List<PropertyConfigModel>>(propertyList, options);
-            await SaveRawFile(entityConfigModel.FileName, content);
+        //public async Task SaveSubEntityProperties(List<PropertyConfigModel> propertyList, EntityConfigModel entityConfigModel)
+        //{
+        //    JsonSerializerOptions options = new()
+        //    {
+        //        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        //    };
+        //    var content = JsonSerializer.Serialize<List<PropertyConfigModel>>(propertyList, options);
+        //    await SaveRawFile(entityConfigModel.FileName, content);
 
-            GenerateCreateTableSql(entityConfigModel.TableName, propertyList);
+        //    GenerateCreateTableSql(entityConfigModel.TableName, propertyList);
 
-        }
+        //}
 
         private async Task BulkInsertDataAsync(string tableName, DataTable dataTable)
         {
