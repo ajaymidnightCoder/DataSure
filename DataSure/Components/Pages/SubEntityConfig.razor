@@ -71,6 +71,7 @@ else
     [CascadingParameter] MainLayout Layout { get; set; }
 
     private bool AddSubEntityClicked = false;
+
     private string SubEntityName = string.Empty;
 
     // Reference to the input element
@@ -80,9 +81,9 @@ else
 
     protected bool IsLoading { get; set; } = true;  // Track loading state
 
-    private EntityConfigModel selectedEntity { get; set; }
+    private SubEntityConfigModel selectedEntity { get; set; }
 
-    protected List<EntityConfigModel> childEntities { get; set; }
+    protected List<SubEntityConfigModel> childEntities { get; set; }
 
     [Inject]
     protected IEntitiyConfigService entityConfigService { get; set; }
@@ -91,7 +92,7 @@ else
     {
         try
         {
-            childEntities = await entityConfigService.GetListByFileName<EntityConfigModel>(SubEntityFile);
+            childEntities = await entityConfigService.GetListByFileName<SubEntityConfigModel>(SubEntityFile);
             if (childEntities?.Count > 0)
             {
                 selectedFileName = childEntities.FirstOrDefault().FileName;
@@ -108,7 +109,7 @@ else
         }
     }
 
-    private void LinkClicked(EntityConfigModel subEntity)
+    private void LinkClicked(SubEntityConfigModel subEntity)
     {
         selectedFileName = subEntity.FileName;
         selectedEntity = subEntity;
@@ -132,9 +133,9 @@ else
     {
         if (!string.IsNullOrEmpty(SubEntityName))
         {
-            if (childEntities.Any(x => x.Name == SubEntityName))
+            if (childEntities.Any(x => x.Name.ToLower() == SubEntityName.ToLower().Trim()))
             {
-                Layout.ShowModal(string.Empty, $"{SubEntityName} already exists.!", "Got It");
+                Layout.ShowModal("Cannot add duplicates!", $"{SubEntityName} already exists.!", "Got It");
             }
             else
             {
@@ -144,7 +145,7 @@ else
 
                 var cleanSubEntityName = SubEntityName.Replace(" ", "").ToLower();
 
-                EntityConfigModel entityConfigModel = new()
+                SubEntityConfigModel entityConfigModel = new()
                     {
                         EntityId = Convert.ToInt32(newEntityId),
                         Name = SubEntityName,
