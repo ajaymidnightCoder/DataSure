@@ -11,43 +11,43 @@
 
 @if (IsLoading)
 {
-    <p>Loading entities...</p>
+        <p>Loading entities...</p>
 }
 else if (childEntities == null || childEntities.Count == 0)
 {
-    <p>No entities available.</p>
+        <p>No entities available.</p>
 }
 else
 {
-    <div>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-2">
+        <div>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light mb-2">
             @foreach (var child in childEntities)
             {
-                <button class="me-2 btn btn-sm btn-outline-secondary @(selectedFileName == child.FileName ? "selected" : "")"
-                        @onclick="() => LinkClicked(child)"
-                        type="button">
+                        <button class="me-2 btn btn-sm btn-outline-secondary @(selectedFileName == child.FileName ? "selected" : "")"
+                                @onclick="() => LinkClicked(child)"
+                                type="button">
                     @child.Name
-                </button>
+                        </button>
             }
 
-            <button class="me-2 btn btn-outline-secondary" @onclick="() => { AddSubEntityClicked = true; }" type="button">
+                <button class="me-2 btn btn-outline-secondary" @onclick="() => { AddSubEntityClicked = true; }" type="button">
                 @if (AddSubEntityClicked)
                 {
-                    <input placeholder="Name" @bind="SubEntityName"
-                           type="text" @onkeyup="HandleKeyUp"
-                           @onblur="() => { AddSubEntityClicked = false; SubEntityName = string.Empty; }"
-                           @ref="subEntityInput" />
+                            <input placeholder="Name" @bind="SubEntityName"
+                                   type="text" @onkeyup="HandleKeyUp"
+                                   @onblur="() => { AddSubEntityClicked = false; SubEntityName = string.Empty; }"
+                                   @ref="subEntityInput" />
                 }
                 else
                 {
-                    <span>Add</span>
+                            <span>Add</span>
                 }
-            </button>
-        </nav>
+                </button>
+            </nav>
 
-        <PropertyGrid entityConfig="@selectedEntity"></PropertyGrid>
+            <PropertyGrid entityConfig="@selectedEntity"></PropertyGrid>
 
-    </div>
+        </div>
 }
 
 <style>
